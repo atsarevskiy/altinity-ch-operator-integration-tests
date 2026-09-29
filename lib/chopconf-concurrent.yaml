@@ -1,0 +1,9 @@
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseOperatorConfiguration
+metadata:
+  name: test-overrides
+spec:
+  reconcile:
+    runtime:
+      reconcileShardsThreadsNumber: ${SHARD_THREADS}
+      reconcileShardsMaxConcurrencyPercent: 100

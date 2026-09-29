@@ -1,0 +1,28 @@
+# Samples every Keeper member once a second and logs how many are serving as leader or follower.
+# A Raft ensemble of 3 is in quorum only while at least 2 are serving.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: keeper-probe
+  labels:
+    app: keeper-probe
+spec:
+  terminationGracePeriodSeconds: 0
+  containers:
+    - name: probe
+      image: ${KEEPER_IMAGE}
+      command: ["sh", "-c"]
+      args:
+        - |
+          while true; do
+            serving=0; modes=""
+            for h in ${KEEPER_HOSTS}; do
+              m=$(echo srvr | nc -w1 "$h" 2181 2>/dev/null | sed -n 's/^Mode: //p')
+              [ -n "$m" ] && [ "$m" != observer ] && serving=$((serving + 1))
+              modes="$modes ${m:-down}"
+            done
+            echo "$(date +%s) serving=$serving modes=$modes"
+            sleep 1
+          done
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}

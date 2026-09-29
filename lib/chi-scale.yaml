@@ -1,0 +1,32 @@
+# ${SHARDS} single-replica shards. Bumping ${ROLL} changes the pod template, so every host
+# is restarted on the next reconcile. Bumping ${PROFILE_REV} changes only a user profile, which
+# the operator reconciles for every host without restarting any pod.
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: ${CHI}
+spec:
+  defaults:
+    templates:
+      podTemplate: server
+  configuration:
+    profiles:
+      default/log_comment: "rev-${PROFILE_REV}"
+    clusters:
+      - name: main
+        layout:
+          shardsCount: ${SHARDS}
+          replicasCount: 1
+  templates:
+    podTemplates:
+      - name: server
+        metadata:
+          annotations:
+            roll: "${ROLL}"
+        spec:
+          containers:
+            - name: clickhouse
+              image: ${CLICKHOUSE_IMAGE}
+              resources:
+                requests: {cpu: 50m, memory: 200Mi}
+                limits: {memory: 1Gi}

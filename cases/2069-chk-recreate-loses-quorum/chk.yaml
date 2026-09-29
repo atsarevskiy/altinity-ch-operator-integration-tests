@@ -1,0 +1,46 @@
+apiVersion: clickhouse-keeper.altinity.com/v1
+kind: ClickHouseKeeperInstallation
+metadata:
+  name: ${CHK}
+spec:
+  defaults:
+    templates:
+      podTemplate: keeper
+      dataVolumeClaimTemplate: ${DATA_VCT}
+  configuration:
+    clusters:
+      - name: main
+        layout:
+          replicasCount: 3
+    settings:
+      keeper_server/four_letter_word_white_list: "*"
+  templates:
+    podTemplates:
+      - name: keeper
+        spec:
+          # The change that forces the Recreate also makes each replacement member slow to start,
+          # the way a pod on a fresh node waits on an image pull or a volume attach.
+          initContainers:
+            - name: slow-start
+              image: ${KEEPER_IMAGE}
+              command: ["sleep", "${START_DELAY}"]
+          containers:
+            - name: clickhouse-keeper
+              image: ${KEEPER_IMAGE}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+    volumeClaimTemplates:
+      - name: data-a
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
+      - name: data-b
+        spec:
+          storageClassName: ${DATA_B_STORAGE_CLASS}
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi

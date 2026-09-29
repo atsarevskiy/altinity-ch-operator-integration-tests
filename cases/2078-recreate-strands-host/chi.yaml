@@ -1,0 +1,44 @@
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: ${CHI}
+spec:
+  defaults:
+    templates:
+      podTemplate: server
+      dataVolumeClaimTemplate: ${DATA_VCT}
+  configuration:
+    clusters:
+      - name: main
+        layout:
+          shardsCount: 2
+          replicasCount: 1
+  templates:
+    podTemplates:
+      - name: server
+        spec:
+          # Stands in for a server that hangs on shutdown (for example wedged on Keeper).
+          terminationGracePeriodSeconds: ${GRACE}
+          containers:
+            - name: clickhouse
+              image: ${CLICKHOUSE_IMAGE}
+              lifecycle:
+                preStop:
+                  exec:
+                    command: ["sleep", "${PRESTOP_SLEEP}"]
+              resources:
+                requests: {cpu: 100m, memory: 256Mi}
+                limits: {memory: 1Gi}
+    volumeClaimTemplates:
+      - name: data-a
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
+      - name: data-b
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi

@@ -1,0 +1,41 @@
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: ${CHI}
+spec:
+  defaults:
+    templates:
+      podTemplate: server
+      dataVolumeClaimTemplate: ${DATA_VCT}
+  configuration:
+    clusters:
+      - name: main
+        layout:
+          shardsCount: 1
+          replicasCount: 2
+  templates:
+    podTemplates:
+      - name: server
+        spec:
+          containers:
+            - name: clickhouse
+              image: ${CLICKHOUSE_IMAGE}
+              resources:
+                requests: {cpu: 100m, memory: 256Mi}
+                limits: {memory: 1Gi}
+    volumeClaimTemplates:
+      - name: data-a
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
+      # No such StorageClass: the replacement pod stays Pending, standing in for a recreated
+      # replica that doesn't come back.
+      - name: data-b
+        spec:
+          storageClassName: does-not-exist
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi

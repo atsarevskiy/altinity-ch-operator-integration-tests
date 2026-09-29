@@ -1,0 +1,10 @@
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages:
+  - RequestReceived
+rules:
+  # Everything the operator sends, at Metadata level: verb, resource, name, URI, response code.
+  - level: Metadata
+    users:
+      - system:serviceaccount:kube-system:clickhouse-operator
+  - level: None

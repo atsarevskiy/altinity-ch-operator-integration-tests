@@ -1,0 +1,34 @@
+apiVersion: clickhouse-keeper.altinity.com/v1
+kind: ClickHouseKeeperInstallation
+metadata:
+  name: ${CHK}
+spec:
+  defaults:
+    templates:
+      podTemplate: keeper
+      dataVolumeClaimTemplate: data
+  configuration:
+    clusters:
+      - name: main
+        layout:
+          replicasCount: 3
+    settings:
+      keeper_server/four_letter_word_white_list: "*"
+      keeper_server/coordination_settings/session_timeout_ms: "${SESSION_TIMEOUT_MS}"
+  templates:
+    podTemplates:
+      - name: keeper
+        spec:
+          containers:
+            - name: clickhouse-keeper
+              image: ${KEEPER_IMAGE}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+    volumeClaimTemplates:
+      - name: data
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
